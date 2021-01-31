@@ -2,9 +2,12 @@ package ru.job4j.repository;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Function;
+import java.util.function.Consumer;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
@@ -31,71 +34,74 @@ public class HibernateRepository {
 			settings.put(Environment.FORMAT_SQL, "true");
 			settings.put(Environment.USE_SQL_COMMENTS, "true");
 			configuration.setProperties(settings);
+			configuration.addAnnotatedClass(Item.class);
 			registry = new StandardServiceRegistryBuilder()
 					.applySettings(configuration.getProperties()).build();
 		} catch (Exception e) {
 		}
 		sf = configuration.buildSessionFactory(registry);
 	}
+	
+	private <T> T tx(final Function<Session, T> command) {
+	    final Session session = this.sf.openSession();
+	    final Transaction tx = session.beginTransaction();
+	    try {
+	        T rsl = command.apply(session);
+	        tx.commit();
+	        return rsl;
+	    } catch (final Exception e) {
+	        session.getTransaction().rollback();
+	        throw e;
+	    } finally {
+	        session.close();
+	    }
+	}
+	
+	private void txVoid(final Consumer<Session> command) {
+	    final Session session = this.sf.openSession();
+	    final Transaction tx = session.beginTransaction();
+	    try {
+	        command.accept(session);
+	        tx.commit();
+	    } catch (final Exception e) {
+	        session.getTransaction().rollback();
+	        throw e;
+	    } finally {
+	        session.close();
+	    }
+	}
 
 	public Item add(Item item) {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		session.save(item);
-		session.getTransaction().commit();
-		session.close();
-		return item;
+		return (Item) this.tx(session -> session.save(item));
 	}
 
-	public boolean replace(String id, Item item) {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		Item res = session.get(Item.class, Integer.valueOf(id));
-		res.setDescription(item.getDescription());
-		res.setCreated(item.getCreated());
-		res.setDone(item.isDone());
-		session.update(res);
-		session.getTransaction().commit();
-		session.close();
-		return false;
+	public void replace(String id, Item item) {
+		this.txVoid(session -> {
+			Item res = session.get(Item.class, Integer.valueOf(id));
+			res.setDescription(item.getDescription());
+			res.setCreated(item.getCreated());
+			res.setDone(item.isDone());
+			session.update(res);
+		});
 	}
 
-	public boolean delete(String id) {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		Item item = Item.of(null, null, null);
-		item.setId(Integer.valueOf(id));
-		session.delete(item);
-		session.getTransaction().commit();
-		session.close();
-		return false;
+	public void delete(String id) {
+		this.txVoid(session -> {
+			Item item = Item.of(null, null, null);
+			item.setId(Integer.valueOf(id));
+			session.delete(item);
+		});
 	}
 
 	public List<Item> findAll() {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		List<Item> result = session.createQuery("SELECT i FROM Item i").getResultList();
-		session.getTransaction().commit();
-		session.close();
-		return result;
+		return this.tx(session -> session.createQuery("SELECT i FROM Item i").getResultList());
 	}
 
 	public List<Item> findByName(String key) {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		List<Item> result = session.createQuery("SELECT i FROM Item i WHERE i.name = :name").setParameter("name", key)
-				.getResultList();
-		session.getTransaction().commit();
-		session.close();
-		return result;
+		return this.tx(session -> session.createQuery("SELECT i FROM Item i WHERE i.name = :name").setParameter("name", key).getResultList());
 	}
 
 	public Item findById(String id) {
-		Session session = this.sf.openSession();
-		session.beginTransaction();
-		Item result = session.get(Item.class, Integer.valueOf(id));
-		session.getTransaction().commit();
-		session.close();
-		return result;
+		return this.tx(session -> session.get(Item.class, Integer.valueOf(id)));
 	}
 }

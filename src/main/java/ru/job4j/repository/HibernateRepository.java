@@ -3,7 +3,6 @@ package ru.job4j.repository;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
-import java.util.function.Consumer;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -45,51 +44,33 @@ public class HibernateRepository {
 	private <T> T tx(final Function<Session, T> command) {
 	    final Session session = this.sf.openSession();
 	    final Transaction tx = session.beginTransaction();
-	    try {
 	        T rsl = command.apply(session);
 	        tx.commit();
+	        session.close();
 	        return rsl;
-	    } catch (final Exception e) {
-	        session.getTransaction().rollback();
-	        throw e;
-	    } finally {
-	        session.close();
-	    }
-	}
-	
-	private void txVoid(final Consumer<Session> command) {
-	    final Session session = this.sf.openSession();
-	    final Transaction tx = session.beginTransaction();
-	    try {
-	        command.accept(session);
-	        tx.commit();
-	    } catch (final Exception e) {
-	        session.getTransaction().rollback();
-	        throw e;
-	    } finally {
-	        session.close();
-	    }
 	}
 
 	public Item add(Item item) {
 		return (Item) this.tx(session -> session.save(item));
 	}
 
-	public void replace(String id, Item item) {
-		this.txVoid(session -> {
+	public boolean replace(String id, Item item) {
+		return this.tx(session -> {
 			Item res = session.get(Item.class, Integer.valueOf(id));
 			res.setDescription(item.getDescription());
 			res.setCreated(item.getCreated());
 			res.setDone(item.isDone());
 			session.update(res);
+			return true;
 		});
 	}
 
-	public void delete(String id) {
-		this.txVoid(session -> {
+	public boolean delete(String id) {
+		return this.tx(session -> {
 			Item item = Item.of(null, null, null);
 			item.setId(Integer.valueOf(id));
 			session.delete(item);
+			return true;
 		});
 	}
 

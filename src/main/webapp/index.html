@@ -1,44 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="CSS/CheckList.css">
-    <link rel="stylesheet" href="CSS/FormPostJson.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<link rel="stylesheet" href="CSS/CheckList.css">
+<link rel="stylesheet" href="CSS/FormPostJson.css">
 </head>
 
 <body>
-    <div class="form-post-json">
-        <label for="description">Описание</label>
-        <input type="text" name="description" id="">
-        <button class="post">Добавить задачу</button>
-    </div>
-    <div>
-        <div class="check-list-element">
-            <input type="checkbox"> Показать только не выполненные
-            <table>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Описание</th>
-                        <th>Создано</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="checkbox" name="" id=""></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <script src="JS/CheckList.js"></script>
-        <script src="JS/FormPostJson.js"></script>
-        <script src="JS/ToDoList.js"></script>
-    </div>
-</body>
+	<div class="form-post-json">
+		<label for="description">Описание</label> <input type="text"
+			name="description" id="">
+		<button class="post">Добавить задачу</button>
+	</div>
+	<div>
+		<div class="check-list-element">
+			<input type="checkbox"> Показать только не выполненные
+			<table>
+				<thead>
+					<tr>
+						<th></th>
+						<th>Описание</th>
+						<th>Создано</th>
+						<th>Автор</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><input type="checkbox" name="" id=""></td>
+						<td></td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<script>
+    async function getAll() {
+        const authStorage = window.localStorage;
+        let authToken = authStorage.getItem('authorization')
+        console.log(authToken)
+        const urlItemRepository = 'http://localhost:8080/todolist/itemRestRepository'
+        let response = await fetch(urlItemRepository, {
+            method: 'GET',
+            headers: {
+                'authorization': authToken.toString()
+            }
+        })    
+        return await response.json()
+    }
 
+
+    async function setDone(id) {
+        const authStorage = window.localStorage;
+        let urlSetDone = 'http://localhost:8080/todolist/itemRestRepository/setDone/'
+        urlSetDone = urlSetDone + id
+        let response = await fetch(urlSetDone, {
+            method: 'GET',
+            mode: 'no-cors',
+            headers: {
+                'authorization': authStorage.getItem('authorization')
+            }
+        })
+        return await response
+    }
+
+    async function setNotDone(id) {
+        const authStorage = window.localStorage;
+        let urlSetNotDone = 'http://localhost:8080/todolist/itemRestRepository/setNotDone/'
+        urlSetNotDone = urlSetNotDone + id
+        let response = await fetch(urlSetNotDone, {
+            method: 'GET',
+            mode: 'no-cors',
+            headers: {
+                'authorization': authStorage.getItem('authorization')
+            }
+        })
+        return await response
+    }
+
+    let visionCheckList = async function () {
+        let allData = await getAll()
+        
+        let checkboxShowNotDone = document.querySelector('.check-list-element>input[type="checkbox"]')
+        if (checkboxShowNotDone.checked) {
+            allData = allData.filter(el => el.done == false)
+        }
+        document.querySelectorAll('.check-list-element>table>tbody').forEach(i => i.innerHTML = '')
+        let element = document.querySelector('.check-list-element>table>tbody')
+        allData.forEach(dataRow => {
+            let arrayRow = Object.entries(dataRow)
+            let tr = document.createElement("tr")
+            let tdInputCheck = document.createElement("td")
+            tr.appendChild(tdInputCheck)
+            let tdDesc = document.createElement("td")
+            tr.appendChild(tdDesc)
+            let tdCreated = document.createElement("td")
+            tr.appendChild(tdCreated)
+            let tdAuthor = document.createElement("td")
+            tr.appendChild(tdAuthor)
+            let inputElement = document.createElement("input")
+            inputElement.type = "checkbox"
+            inputElement.addEventListener("click", async function(event) {
+                let id = dataRow["id"]
+                if (event.target.checked) {
+                    await setDone(id)
+                } else {
+                    await setNotDone(id)
+                }
+            })
+            tdInputCheck.appendChild(inputElement)
+            arrayRow.forEach(([key, value]) => {
+                if (key == "done") {
+                    inputElement.checked = value
+                }
+                if (key == "description") {
+                    tdDesc.textContent = value
+                }
+                if (key == "created") {
+                    let timeValue = new String(value)
+                    timeValue = timeValue.substring(0, timeValue.indexOf("["))
+                    timeValue = new Date(timeValue)
+                    tdCreated.textContent = timeValue.toLocaleDateString()
+                }
+                if (key == "user") {
+                    tdAuthor.textContent = value.name
+                }
+            });
+            element.appendChild(tr)
+        });
+    }
+    </script>
+	<script>
+	let urlPostJsonToDo = "http://localhost:8080/todolist/itemRestRepository"
+
+		async function postToDo(url) {
+		    const authStorage = window.localStorage;
+		    let data = {}
+		    let valueDescription = document.querySelector('.form-post-json>input[name="description"]')
+		    data.description = valueDescription.value
+		    data.user = {}
+		    data.user.id = 2
+		    let response = await fetch(url, {
+		        method: 'POST',
+		        mode: 'no-cors',
+		        body: JSON.stringify(data),
+		        headers: {
+		            'Content-Type': 'application/json',
+		            'authorization': authStorage.getItem('authorization')
+		        }
+		    });
+		    return await response
+		}
+	</script>
+	<script src="JS/ToDoList.js"></script>
+</body>
 </html>

@@ -1,24 +1,50 @@
 async function getAll() {
-    let response = await fetch('http://localhost:8080/todolist')
+    const authStorage = window.localStorage;
+    let authToken = authStorage.getItem('authorization')
+    console.log(authToken)
+    const urlItemRepository = 'http://localhost:8080/todolist/itemRestRepository'
+    let response = await fetch(urlItemRepository, {
+        method: 'GET',
+        mode: 'no-cors',
+        headers: {
+            'authorization': authToken
+        }
+    })    
     return await response.json()
 }
 
+
 async function setDone(id) {
-    let urlSetDone = 'http://localhost:8080/todolist/setDone/'
+    const authStorage = window.localStorage;
+    let urlSetDone = 'http://localhost:8080/todolist/itemRestRepository/setDone/'
     urlSetDone = urlSetDone + id
-    let response = await fetch(urlSetDone)
+    let response = await fetch(urlSetDone, {
+        method: 'GET',
+        mode: 'no-cors',
+        headers: {
+            'authorization': authStorage.getItem('authorization')
+        }
+    })
     return await response
 }
 
 async function setNotDone(id) {
-    let urlSetNotDone = 'http://localhost:8080/todolist/setNotDone/'
+    const authStorage = window.localStorage;
+    let urlSetNotDone = 'http://localhost:8080/todolist/itemRestRepository/setNotDone/'
     urlSetNotDone = urlSetNotDone + id
-    let response = await fetch(urlSetNotDone)
+    let response = await fetch(urlSetNotDone, {
+        method: 'GET',
+        mode: 'no-cors',
+        headers: {
+            'authorization': authStorage.getItem('authorization')
+        }
+    })
     return await response
 }
 
 let visionCheckList = async function () {
     let allData = await getAll()
+    
     let checkboxShowNotDone = document.querySelector('.check-list-element>input[type="checkbox"]')
     if (checkboxShowNotDone.checked) {
         allData = allData.filter(el => el.done == false)
@@ -34,6 +60,8 @@ let visionCheckList = async function () {
         tr.appendChild(tdDesc)
         let tdCreated = document.createElement("td")
         tr.appendChild(tdCreated)
+        let tdAuthor = document.createElement("td")
+        tr.appendChild(tdAuthor)
         let inputElement = document.createElement("input")
         inputElement.type = "checkbox"
         inputElement.addEventListener("click", async function(event) {
@@ -58,7 +86,10 @@ let visionCheckList = async function () {
                 timeValue = new Date(timeValue)
                 tdCreated.textContent = timeValue.toLocaleDateString()
             }
-            element.appendChild(tr)
+            if (key == "user") {
+                tdAuthor.textContent = value.name
+            }
         });
+        element.appendChild(tr)
     });
 }

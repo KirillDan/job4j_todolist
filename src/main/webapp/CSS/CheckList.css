@@ -48,10 +48,6 @@ body{
 	padding-bottom: 2vw;
 }
 
-.check-list-element>table>thead>tr>th:last-child {
-    width: 15vw;
-}
-
 .check-list-element>table>thead>tr>th:first-child {
     width: 5vw;
 }

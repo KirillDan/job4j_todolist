@@ -1,88 +1,100 @@
 package ru.job4j.repository;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Properties;
 import java.util.function.Function;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
-
-import ru.job4j.model.Item;
 
 public class HibernateRepository {
 	private SessionFactory sf;
 
-	public HibernateRepository() {
-		Configuration configuration = new Configuration();
-		StandardServiceRegistry registry = null;
-		try {
-			Properties settings = new Properties();
-			settings.put(Environment.DRIVER, "org.postgresql.Driver");
-			settings.put(Environment.URL, "jdbc:postgresql://127.0.0.1:5432/tracker");
-			settings.put(Environment.USER, "postgres");
-			settings.put(Environment.PASS, "123");
-			settings.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-			settings.put(Environment.DIALECT, "org.hibernate.dialect.PostgreSQL10Dialect");
-			settings.put(Environment.HBM2DDL_AUTO, "update");
-			settings.put(Environment.SHOW_SQL, "true");
-			settings.put(Environment.FORMAT_SQL, "true");
-			settings.put(Environment.USE_SQL_COMMENTS, "true");
-			configuration.setProperties(settings);
-			configuration.addAnnotatedClass(Item.class);
-			registry = new StandardServiceRegistryBuilder()
-					.applySettings(configuration.getProperties()).build();
-		} catch (Exception e) {
-		}
-		sf = configuration.buildSessionFactory(registry);
+	public HibernateRepository(HibernateRepositorySettings settings) {
+		this.sf = settings.getSessionFactory();
 	}
-	
+
 	private <T> T tx(final Function<Session, T> command) {
-	    final Session session = this.sf.openSession();
+		final Session session = sf.openSession();
 	    final Transaction tx = session.beginTransaction();
+	    try {
 	        T rsl = command.apply(session);
 	        tx.commit();
-	        session.close();
 	        return rsl;
+	    } catch (final Exception e) {
+	        session.getTransaction().rollback();
+	        return null;
+	    } finally {
+	        session.close();
+	    }
 	}
 
-	public Item add(Item item) {
-		return (Item) this.tx(session -> session.save(item));
+	public <T> T add(T model) {
+		return (T) this.tx(session -> session.save(model));
 	}
 
-	public boolean replace(String id, Item item) {
+	public <T> boolean replace(String id, T model) {
 		return this.tx(session -> {
-			Item res = session.get(Item.class, Integer.valueOf(id));
-			res.setDescription(item.getDescription());
-			res.setCreated(item.getCreated());
-			res.setDone(item.isDone());
+			T res = (T) session.find(model.getClass(), Integer.valueOf(id));
+			Method[] methods = model.getClass().getMethods();
+			for (Method method : methods) {
+				int startIndex = -1;
+				if (!method.getName().equals("getId") && !method.getName().equals("getClass")) {
+					if (method.getName().indexOf("get") == 0) {
+						startIndex = 3;
+					} else if (method.getName().indexOf("is") == 0) {
+						startIndex = 2;
+					}
+					if (startIndex != -1) {
+						try {
+							System.out.println("--------------------------------------------------------");
+							System.out.println("method.getName() = " + method.getName());
+							Method resMethod;
+							Field resField;
+							resField = res.getClass().getDeclaredField(method.getName().substring(startIndex).toLowerCase());
+							resMethod = res.getClass().getMethod("set" + method.getName().substring(startIndex),
+									resField.getType());
+							System.out.println(resMethod);
+							System.out.println("--------------------------------------------------------");
+							resMethod.invoke(res, method.invoke(model, null));
+						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+								| NoSuchMethodException | SecurityException | NoSuchFieldException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
 			session.update(res);
 			return true;
 		});
+
 	}
 
-	public boolean delete(String id) {
+	public <T> boolean delete(Class<T> cl, String id) {
 		return this.tx(session -> {
-			Item item = Item.of(null, null, null);
-			item.setId(Integer.valueOf(id));
-			session.delete(item);
+			session.createQuery("DELETE FROM " + cl.getName() + " u WHERE u.id = " + id);
 			return true;
 		});
 	}
 
-	public List<Item> findAll() {
-		return this.tx(session -> session.createQuery("SELECT i FROM Item i").getResultList());
+	public <T> List<T> findAll(Class<T> cl) {
+		return this.tx(session -> session.createQuery("SELECT u FROM " + cl.getName() + " u").getResultList());
 	}
 
-	public List<Item> findByName(String key) {
-		return this.tx(session -> session.createQuery("SELECT i FROM Item i WHERE i.name = :name").setParameter("name", key).getResultList());
+	public <T> T findById(Class<T> cl, String id) {
+		return this.tx(session -> session.get(cl, Integer.valueOf(id)));
 	}
 
-	public Item findById(String id) {
-		return this.tx(session -> session.get(Item.class, Integer.valueOf(id)));
+	public <T> List<T> findByName(Class<T> cl, String key) {
+		return this.tx(session -> session.createQuery("SELECT u FROM " + cl.getName() + " u WHERE u.name = :name")
+				.setParameter("name", key).getResultList());
+	}
+
+	public <T> T findByEmail(Class<T> cl, String key) {
+		return (T) this.tx(session -> session.createQuery("SELECT u FROM " + cl.getName() + " u WHERE u.email = :email")
+				.setParameter("email", key).getSingleResult());
 	}
 }

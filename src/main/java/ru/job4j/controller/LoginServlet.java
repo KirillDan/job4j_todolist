@@ -72,7 +72,7 @@ public class LoginServlet extends HttpServlet {
 		        resp.setHeader("Access-Control-Allow-Origin", "*");
 				
 				JwtBuilder jwtBuilder = Jwts.builder();
-				jwtBuilder.setSubject(email);
+				jwtBuilder.setSubject(String.valueOf(admin.getId()));
 	            jwtBuilder.setExpiration(new Date(System.currentTimeMillis() + 864000000));
 	            jwtBuilder.signWith(SignatureAlgorithm.HS512, Key.secretKey);
 	            String token = jwtBuilder.compact();
@@ -81,7 +81,7 @@ public class LoginServlet extends HttpServlet {
 			}
 		} else {
 			req.setAttribute("error", "Не верный email или пароль");
-			req.getRequestDispatcher("jsp/login.jsp").forward(req, resp);
+			req.getRequestDispatcher("jsp/login.html").forward(req, resp);
 		}
 	}
 }

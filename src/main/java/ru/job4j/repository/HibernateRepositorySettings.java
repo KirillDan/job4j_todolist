@@ -8,6 +8,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
+import ru.job4j.model.Category;
 import ru.job4j.model.Item;
 import ru.job4j.model.Role;
 import ru.job4j.model.User;
@@ -34,6 +35,7 @@ public class HibernateRepositorySettings {
 			configuration.addAnnotatedClass(Item.class);
 			configuration.addAnnotatedClass(Role.class);
 			configuration.addAnnotatedClass(User.class);
+			configuration.addAnnotatedClass(Category.class);
 			registry = new StandardServiceRegistryBuilder()
 					.applySettings(configuration.getProperties()).build();
 		} catch (Exception e) {

@@ -34,7 +34,6 @@ public class RegServlet extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		HttpSession sc = req.getSession();
 		String name = req.getParameter("name");
 		String email = req.getParameter("email");
 		String password = req.getParameter("password");
@@ -49,8 +48,7 @@ public class RegServlet extends HttpServlet {
 				req.getRequestDispatcher("jsp/reg.jsp").forward(req, resp);
 			} else {
 				this.repository.add(user);
-				sc.setAttribute("user", user);
-				resp.sendRedirect(req.getContextPath() + "/");
+				req.getRequestDispatcher("jsp/login.html").forward(req, resp);
 			}
 		}
 	}

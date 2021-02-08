@@ -30,6 +30,10 @@ public class AuthFilter implements Filter {
             chain.doFilter(sreq, sresp);
             return;
         }
+        if (req.getHeader("authorization") == null || req.getHeader("authorization").isEmpty()) {
+        	resp.sendRedirect(req.getContextPath() + "/auth.do");
+            return;
+        }
         JwtParser jws = Jwts.parserBuilder().setSigningKey(Key.secretKey).build();
 		Jwt jwt = jws.parse(req.getHeader("authorization").substring("Bearer ".length()));
 		Claims claims = (Claims) jwt.getBody();
@@ -37,7 +41,7 @@ public class AuthFilter implements Filter {
 		Long dateExp = new Long(dateExpInteger);
 		dateExp *= 1000;		
         if (dateExp < System.currentTimeMillis()) {
-            resp.sendRedirect(req.getContextPath() + "jsp/login.html");
+            resp.sendRedirect(req.getContextPath() + "/auth.do");
             return;
         }
         chain.doFilter(sreq, sresp);

@@ -3,6 +3,7 @@ package ru.job4j.model;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -13,6 +14,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 @Entity
 public class Item {
@@ -20,7 +23,8 @@ public class Item {
 	@GeneratedValue
 	private Integer id;
 	private String description;
-	private Timestamp created;
+	@Temporal(TemporalType.TIMESTAMP)
+    private Date created;
 	private Boolean done;
 	
 	@OneToOne
@@ -30,7 +34,7 @@ public class Item {
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
 	private List<Category> categories = new ArrayList<>();
 
-	public static Item of(String description, Timestamp created, Boolean done) {
+	public static Item of(String description, Date created, Boolean done) {
 		Item item = new Item();
 		item.description = description;
 		item.created = created;
@@ -41,7 +45,7 @@ public class Item {
 	public static Item of(String description) {
 		Item item = new Item();
 		item.description = description;
-		item.created = Timestamp.valueOf(LocalDateTime.now());
+		item.created = new Date(System.currentTimeMillis());
 		item.done = false;
 		item.user = null;
         return item;
@@ -50,7 +54,7 @@ public class Item {
 	public static Item of(String description, User user, List<Category> categories) {
 		Item item = new Item();
 		item.description = description;
-		item.created = Timestamp.valueOf(LocalDateTime.now());
+		item.created = new Date(System.currentTimeMillis());
 		item.done = false;
 		item.user = user;
 		item.categories = categories;
@@ -69,10 +73,10 @@ public class Item {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	public Timestamp getCreated() {
+	public Date getCreated() {
 		return created;
 	}
-	public void setCreated(Timestamp created) {
+	public void setCreated(Date created) {
 		this.created = created;
 	}
 	public boolean isDone() {

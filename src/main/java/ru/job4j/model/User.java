@@ -3,14 +3,6 @@ package ru.job4j.model;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.*;
 
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.Objects;
 
 @Entity

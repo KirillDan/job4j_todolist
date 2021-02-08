@@ -31,6 +31,7 @@ public class HibernateRepositorySettings {
 			settings.put(Environment.SHOW_SQL, "true");
 			settings.put(Environment.FORMAT_SQL, "true");
 			settings.put(Environment.USE_SQL_COMMENTS, "true");
+			settings.put(Environment.JDBC_TIME_ZONE, "Africa/Addis_Ababa");
 			configuration.setProperties(settings);
 			configuration.addAnnotatedClass(Item.class);
 			configuration.addAnnotatedClass(Role.class);

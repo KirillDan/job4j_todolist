@@ -1,17 +1,8 @@
 package ru.job4j.controller;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.Date;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import javax.servlet.ServletException;
@@ -19,18 +10,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Encoders;
-import io.jsonwebtoken.security.Keys;
 import ru.job4j.auth.Key;
-import ru.job4j.model.Item;
 import ru.job4j.model.User;
 import ru.job4j.repository.HibernateRepository;
 import ru.job4j.repository.HibernateRepositorySettings;
@@ -39,7 +23,7 @@ import ru.job4j.repository.HibernateRepositorySettings;
 public class LoginServlet extends HttpServlet {
 	private HibernateRepository repository;
 	private Jsonb jsonb;
-	
+
 	public void init() {
 		HibernateRepositorySettings settings = new HibernateRepositorySettings();
 		this.repository = new HibernateRepository(settings);

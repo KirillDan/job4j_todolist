@@ -1,7 +1,6 @@
 package ru.job4j.controller;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -9,7 +8,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import ru.job4j.model.Role;
 import ru.job4j.model.User;
@@ -19,13 +17,8 @@ import ru.job4j.repository.HibernateRepositorySettings;
 @WebServlet(urlPatterns = {"/reg.do"})
 public class RegServlet extends HttpServlet {
 	
-	private HibernateRepository repository;
-	
-	public void init() {
-		HibernateRepositorySettings settings = new HibernateRepositorySettings();
-		this.repository = new HibernateRepository(settings);
-	}
-	
+	private final HibernateRepository repository = new HibernateRepository(new HibernateRepositorySettings());
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		RequestDispatcher rd = req.getRequestDispatcher("jsp/reg.jsp");

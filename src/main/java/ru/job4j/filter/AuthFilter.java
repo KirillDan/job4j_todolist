@@ -9,11 +9,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Encoders;
 import ru.job4j.auth.Key;
 
 import java.io.IOException;
-import java.util.Date;
 
 @WebFilter("/*")
 public class AuthFilter implements Filter {
